@@ -1,4 +1,4 @@
-# Echo - Where emotions echo through strangers
+# Echo - Where emotions echo through strangers (Made with love by claude :> )
 
 Echo is a minimalist, Twitter-like platform where users can express their thoughts and feelings anonymously. The platform focuses on genuine emotional expression without the pressure of social identity.
 
