@@ -1,0 +1,54 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Rules for the 'users' collection
+    match /users/{userId} {
+      // Allow authenticated users to read their own document
+      allow read: if request.auth != null && request.auth.uid == userId;
+
+      // Allow authenticated users to create their own document (e.g., during signup)
+      allow create: if request.auth != null && request.auth.uid == userId;
+
+      // Allow authenticated users to update their own document (needed for adding friends)
+      // Specifically allowing modifications to the 'friends' array
+      allow update: if request.auth != null && request.auth.uid == userId
+                    && (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['friends']) // Only 'friends' field is affected
+                        || request.resource.data.diff(resource.data).affectedKeys().isEmpty()); // Or no fields affected
+
+      // Allow listing users only by querying with a specific index (e.g., by echoId)
+      // This rule is needed for the "Add Friend" search functionality.
+      // If you haven't set up an index for 'echoId' on the 'users' collection, you will get a warning in the console and need to create one.
+      allow list: if request.auth != null; // WARNING: This is broad, consider more specific conditions if possible
+    }
+
+    // Rules for the 'echoes' collection (Public Echoes)
+    match /echoes/{echoId} {
+      // Allow anyone to read public echoes
+      allow read: if true;
+
+      // Allow authenticated users to create echoes
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
+
+      // Add update/delete rules if needed for editing/deleting echoes
+      // allow update, delete: if request.auth != null && request.auth.uid == resource.data.userId; // Allow user to manage their own echoes
+    }
+
+    // Rules for the 'privateVibes' collection
+    match /privateVibes/{vibeId} {
+      // Allow authenticated users to read their own private vibes
+      allow read: if request.auth != null && request.auth.uid == resource.data.userId;
+      
+      // Allow authenticated users to create private vibes with themselves as the owner
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
+      
+      // Allow authenticated users to update and delete their own private vibes
+      allow update, delete: if request.auth != null && request.auth.uid == resource.data.userId;
+    }
+
+    // Deny all access to any other documents by default
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+} 
